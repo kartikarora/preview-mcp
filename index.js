@@ -97,7 +97,7 @@ async function handleLoginCommand() {
   <div class="card">
     <div class="badge">Google Authentication</div>
     <h2>Successfully Signed In!</h2>
-    <p>Logged in as <strong>${email}</strong>.<br>Claude Desktop and your MCP agents are now connected.</p>
+    <p>Logged in as <strong>${email}</strong>.<br>Your MCP agents (Antigravity, Gemini, Codex, Cursor, Claude) are now connected.</p>
     <div class="muted">You can safely close this browser window and return to your terminal.</div>
   </div>
 </body>
@@ -105,7 +105,7 @@ async function handleLoginCommand() {
 
         console.log(`\n✓ Successfully authenticated with Google as ${email}`);
         console.log(`✓ Credentials stored in ${CONFIG_FILE}`);
-        console.log('\nYou can now use Previews in Claude Desktop, Claude Code, or any MCP client.');
+        console.log('\nYou can now use Previews in Antigravity, Gemini, Codex, Cursor, Claude, or any MCP client.');
 
         setTimeout(() => {
           server.close(() => process.exit(0));
