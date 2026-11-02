@@ -152,7 +152,7 @@ function startStdioMcpBridge() {
         error: {
           code: -32001,
           message:
-            'Not authenticated. Please run "npx @preview/mcp login" to sign in with your Google account, or set PREVIEWS_API_TOKEN in your environment.',
+            'Not authenticated. Please run "npx preview-mcp login" to sign in with your Google account, or set PREVIEWS_API_TOKEN in your environment.',
         },
       };
     }
