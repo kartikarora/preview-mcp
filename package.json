@@ -1,7 +1,7 @@
 {
-  "name": "@preview/mcp",
+  "name": "preview-mcp",
   "version": "0.3.0",
-  "description": "Universal Model Context Protocol (MCP) server & stdio bridge for Previews",
+  "description": "Universal Model Context Protocol (MCP) CLI and stdio bridge for Previews",
   "main": "index.js",
   "bin": {
     "preview-mcp": "./index.js"
@@ -10,11 +10,18 @@
   "scripts": {
     "start": "node index.js"
   },
+  "files": [
+    "index.js",
+    "README.md"
+  ],
   "keywords": [
     "mcp",
     "model-context-protocol",
     "mcp-server",
     "cursor",
+    "antigravity",
+    "gemini",
+    "codex",
     "windsurf",
     "claude",
     "claude-desktop",
@@ -25,5 +32,8 @@
     "html-preview"
   ],
   "author": "Kartik Arora",
-  "license": "MIT"
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
 }

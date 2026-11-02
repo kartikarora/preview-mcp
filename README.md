@@ -1,7 +1,7 @@
 # Universal Model Context Protocol (MCP) Setup for Previews
 
 Previews provides a universal **Model Context Protocol (MCP)** server supporting:
-1. **Local Stdio Transport**: Standard stdio subprocess bridge (`npx @preview/mcp`) for all AI coding environments, IDEs, and CLI tools.
+1. **Local Stdio Transport**: Standard stdio subprocess bridge (`npx preview-mcp`) for all AI coding environments, IDEs, and CLI tools.
 2. **Remote Transports**: Direct **SSE** (`/mcp/sse`) and **HTTP JSON-RPC** (`/mcp`) hosted on Cloudflare Workers edge for remote agents, cloud runtimes, and webhook integrations.
 
 Authentication is powered entirely by your **Google Account**, reusing the existing session flow without custom token tables or passwords.
@@ -12,11 +12,11 @@ Authentication is powered entirely by your **Google Account**, reusing the exist
 
 Run this one-time command from any terminal:
 ```bash
-npx @preview/mcp login
+npx preview-mcp login
 ```
 *For local development against your local dev server:*
 ```bash
-PREVIEWS_BASE_URL=http://localhost:7584 npx @preview/mcp login
+PREVIEWS_BASE_URL=http://localhost:7584 npx preview-mcp login
 ```
 This opens your browser to sign in with Google. Once verified, credentials are automatically saved to `~/.preview/config.json`.
 
@@ -35,7 +35,7 @@ Add to your project's `.gemini/settings.json` or workspace MCP configuration:
   "mcpServers": {
     "preview": {
       "command": "npx",
-      "args": ["-y", "@preview/mcp"],
+      "args": ["-y", "preview-mcp"],
       "env": {
         "PREVIEWS_BASE_URL": "https://previews.kartikarora.me"
       }
@@ -63,7 +63,7 @@ Add to your project's `.gemini/settings.json` or workspace MCP configuration:
   "mcpServers": {
     "preview": {
       "command": "npx",
-      "args": ["-y", "@preview/mcp"],
+      "args": ["-y", "preview-mcp"],
       "env": {
         "PREVIEWS_BASE_URL": "https://previews.kartikarora.me"
       }
@@ -79,7 +79,7 @@ Add to your client configuration:
   "mcpServers": {
     "preview": {
       "command": "npx",
-      "args": ["-y", "@preview/mcp"],
+      "args": ["-y", "preview-mcp"],
       "env": {
         "PREVIEWS_BASE_URL": "https://previews.kartikarora.me"
       }
@@ -94,7 +94,7 @@ Add to your client configuration:
   "mcpServers": {
     "preview": {
       "command": "npx",
-      "args": ["-y", "@preview/mcp"],
+      "args": ["-y", "preview-mcp"],
       "env": {
         "PREVIEWS_BASE_URL": "https://previews.kartikarora.me"
       }
@@ -111,7 +111,7 @@ Add to your client configuration:
   "mcpServers": {
     "preview": {
       "command": "npx",
-      "args": ["-y", "@preview/mcp"],
+      "args": ["-y", "preview-mcp"],
       "env": {
         "PREVIEWS_BASE_URL": "https://previews.kartikarora.me"
       }
@@ -122,7 +122,7 @@ Add to your client configuration:
 
 ### Claude Code (`.mcp.json` or CLI)
 ```bash
-claude mcp add preview -- npx -y @preview/mcp
+claude mcp add preview -- npx -y preview-mcp
 ```
 
 ### Zed Editor (`~/.config/zed/settings.json`)
@@ -135,7 +135,7 @@ claude mcp add preview -- npx -y @preview/mcp
     "preview": {
       "command": {
         "path": "npx",
-        "args": ["-y", "@preview/mcp"]
+        "args": ["-y", "preview-mcp"]
       }
     }
   }
