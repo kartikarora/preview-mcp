@@ -14,10 +14,6 @@ Run this one-time command from any terminal:
 ```bash
 npx preview-mcp login
 ```
-*For local development against your local dev server:*
-```bash
-PREVIEWS_BASE_URL=http://localhost:7584 npx preview-mcp login
-```
 This opens your browser to sign in with Google. Once verified, credentials are automatically saved to `~/.preview/config.json`.
 
 Alternatively, if you're already logged into the Previews web dashboard, click **"MCP / AI Agents"** in the top navigation bar to copy your Google session token directly.
