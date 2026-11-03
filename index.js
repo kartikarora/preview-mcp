@@ -29,16 +29,18 @@ function openBrowser(url) {
 // 1. Resolve configuration from environment or ~/.preview/config.json
 function resolveConfig() {
   let token = process.env.PREVIEWS_API_TOKEN || process.env.PREVIEW_API_TOKEN || '';
-  let baseUrl = process.env.PREVIEWS_BASE_URL || process.env.PREVIEW_BASE_URL || 'https://previews.kartikarora.me';
+  let baseUrl = process.env.PREVIEWS_BASE_URL || process.env.PREVIEW_BASE_URL || '';
 
-  if (!token) {
-    try {
-      if (fs.existsSync(CONFIG_FILE)) {
-        const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
-        token = config.token || config.sessionToken || '';
-        if (config.baseUrl) baseUrl = config.baseUrl;
-      }
-    } catch (_) {}
+  try {
+    if (fs.existsSync(CONFIG_FILE)) {
+      const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
+      if (!token) token = config.token || config.sessionToken || '';
+      if (!baseUrl && config.baseUrl) baseUrl = config.baseUrl;
+    }
+  } catch (_) {}
+
+  if (!baseUrl) {
+    baseUrl = 'https://previews.kartikarora.me';
   }
 
   baseUrl = baseUrl.replace(/\/+$/, '');
@@ -65,8 +67,14 @@ function saveCredentials(token, email, baseUrl) {
 
 // 2. Interactive Google OAuth Login Flow
 async function handleLoginCommand() {
-  const config = resolveConfig();
-  console.log('Initiating Google sign-in for Previews...');
+  // Login target defaults to production unless explicitly set via environment variable
+  const targetBaseUrl = (
+    process.env.PREVIEWS_BASE_URL ||
+    process.env.PREVIEW_BASE_URL ||
+    'https://previews.kartikarora.me'
+  ).replace(/\/+$/, '');
+
+  console.log('Initiating Google sign-in for Previews (' + targetBaseUrl + ')...');
 
   const server = http.createServer((req, res) => {
     const reqUrl = new URL(req.url, `http://${req.headers.host}`);
@@ -76,7 +84,7 @@ async function handleLoginCommand() {
       const email = reqUrl.searchParams.get('email') || 'Google Account';
 
       if (token) {
-        saveCredentials(token, email, config.baseUrl);
+        saveCredentials(token, email, targetBaseUrl);
 
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         res.end(`<!DOCTYPE html>
@@ -124,7 +132,7 @@ async function handleLoginCommand() {
   server.listen(0, '127.0.0.1', () => {
     const address = server.address();
     const port = address.port;
-    const loginUrl = `${config.baseUrl}/auth/login?cli_port=${port}`;
+    const loginUrl = `${targetBaseUrl}/auth/login?cli_port=${port}`;
 
     console.log(`Opening browser to sign in with Google:\n${loginUrl}\n`);
     openBrowser(loginUrl);
@@ -164,7 +172,7 @@ function startStdioMcpBridge() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${config.token}`,
+          Authorization: `Bearer ${config.token}`
         },
         body: JSON.stringify(rpcMessage),
       });
