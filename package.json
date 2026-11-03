@@ -4,7 +4,7 @@
   "description": "Universal Model Context Protocol (MCP) CLI and stdio bridge for Previews",
   "main": "index.js",
   "bin": {
-    "preview-mcp": "./index.js"
+    "preview-mcp": "index.js"
   },
   "type": "module",
   "scripts": {
