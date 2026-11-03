@@ -8,12 +8,14 @@ Authentication is powered entirely by your **Google Account**, reusing the exist
 
 ---
 
-## 1. Quick Authentication (Google Login)
+## 1. Quick Authentication & Re-authentication (Google Login)
 
-Run this one-time command from any terminal:
+Run this command from any terminal to sign in or re-authenticate:
 ```bash
 npx preview-mcp login
 ```
+*(Or alias `npx preview-mcp reauthenticate`)*
+
 This opens your browser to sign in with Google. Once verified, credentials are automatically saved to `~/.preview/config.json`.
 
 Alternatively, if you're already logged into the Previews web dashboard, click **"MCP / AI Agents"** in the top navigation bar to copy your Google session token directly.
@@ -117,9 +119,16 @@ Add to your client configuration:
 ```
 
 ### Claude Code (`.mcp.json` or CLI)
+Claude Code supports both standard HTTP transport with native **Authenticate / Re-authenticate** prompts, and local stdio:
+
 ```bash
+# Direct HTTP transport with OAuth discovery:
+claude mcp add --transport http preview https://previews.kartikarora.me/mcp
+
+# Or stdio CLI transport:
 claude mcp add preview -- npx -y preview-mcp
 ```
+Inside your Claude Code session, type `/mcp` and select **Authenticate** or **Re-authenticate** to sign in directly with Google in your browser.
 
 ### Zed Editor (`~/.config/zed/settings.json`)
 ```json
@@ -158,6 +167,7 @@ For automated cloud agents (Antigravity, Gemini, OpenAI Codex, LangChain, LlamaI
 
 | Tool | Description |
 | :--- | :--- |
+| `authenticate` | Check status or get instructions to authenticate/re-authenticate with Google. |
 | `create_preview` | Deploy v1 preview. Accepts `html` or multi-file `files` array. Password optional. |
 | `update_preview` | Deploy new version (v2, v3, etc.) with optional changelog. |
 | `get_preview_diff` | Get plain-text unified diff between any two versions (e.g. `1..2`). |

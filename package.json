@@ -8,7 +8,10 @@
   },
   "type": "module",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "login": "node index.js login",
+    "authenticate": "node index.js authenticate",
+    "reauthenticate": "node index.js reauthenticate"
   },
   "files": [
     "index.js",

@@ -75,7 +75,7 @@ function saveCredentials(token, email, baseUrl) {
   }
 }
 
-// 2. Interactive Google OAuth Login Flow
+// 2. Interactive Google OAuth Login / Re-authentication Flow
 async function handleLoginCommand() {
   // Login target defaults to production unless explicitly set via environment variable
   const targetBaseUrl = (
@@ -233,7 +233,7 @@ function startStdioMcpBridge() {
         error: {
           code: -32001,
           message:
-            'Not authenticated. Please run "npx preview-mcp login" to sign in with your Google account, or set PREVIEWS_API_TOKEN in your environment.',
+            'Not authenticated. Please run "npx preview-mcp login" or "npx preview-mcp reauthenticate" to sign in with your Google account, or set PREVIEWS_API_TOKEN in your environment.',
         },
       };
     }
@@ -312,7 +312,13 @@ function startStdioMcpBridge() {
 }
 
 // Main execution switch
-if (process.argv.includes('login')) {
+const isAuthCommand =
+  process.argv.includes('login') ||
+  process.argv.includes('authenticate') ||
+  process.argv.includes('reauthenticate') ||
+  process.argv.includes('auth');
+
+if (isAuthCommand) {
   handleLoginCommand();
 } else {
   startStdioMcpBridge();
