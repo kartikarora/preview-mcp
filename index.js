@@ -10,6 +10,16 @@ import { exec } from 'child_process';
 const CONFIG_DIR = path.join(os.homedir(), '.preview');
 const CONFIG_FILE = path.join(CONFIG_DIR, 'config.json');
 
+// Helper to escape HTML characters for safe template interpolation
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // Helper to open browser cross-platform
 function openBrowser(url) {
   const platform = process.platform;
@@ -88,25 +98,46 @@ async function handleLoginCommand() {
 
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         res.end(`<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Previews - Authenticated</title>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #0f172a; color: #f8fafc; }
-    .card { text-align: center; max-width: 440px; padding: 40px; background: #1e293b; border-radius: 12px; border: 1px solid #334155; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5); }
-    h2 { color: #38bdf8; margin: 0 0 12px 0; }
-    p { color: #94a3b8; font-size: 15px; line-height: 1.5; margin: 0 0 20px 0; }
-    .badge { display: inline-block; background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); padding: 4px 12px; border-radius: 20px; font-weight: 500; font-size: 14px; margin-bottom: 16px; }
-    .muted { color: #64748b; font-size: 13px; }
-  </style>
+
+  <!-- Brand Identity CSS -->
+  <link href="https://distribute.kartikarora.me/css/kartikarora.css" rel="stylesheet">
+
+  <!-- Required Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+
+  <!-- Brand Interaction JS -->
+  <script src="https://distribute.kartikarora.me/js/kartikarora.js"></script>
 </head>
-<body>
-  <div class="card">
-    <div class="badge">Google Authentication</div>
-    <h2>Successfully Signed In!</h2>
-    <p>Logged in as <strong>${email}</strong>.<br>Your MCP agents (Antigravity, Gemini, Codex, Cursor, Claude) are now connected.</p>
-    <div class="muted">You can safely close this browser window and return to your terminal.</div>
+<body style="min-height: 100vh; display: flex; align-items: center; justify-content: center; margin: 0; padding: var(--space-md); box-sizing: border-box;">
+  <div class="card-glass" style="max-width: 480px; width: 100%; border-radius: var(--border-radius); padding: var(--space-2xl) var(--space-xl); text-align: center; box-shadow: 0 12px 40px var(--shadow);">
+    <div style="margin-bottom: var(--space-md);">
+      <span class="badge badge-win" style="display: inline-flex; align-items: center; gap: var(--space-xs); padding: 4px 12px; font-size: 0.85rem;">
+        <span class="material-symbols-outlined" style="font-size: 1rem;">verified_user</span>
+        Google Authentication
+      </span>
+    </div>
+
+    <div style="margin-bottom: var(--space-md);">
+      <span class="material-symbols-outlined" style="font-size: var(--icon-size-feature); color: var(--accent);">check_circle</span>
+    </div>
+
+    <h1 style="margin: 0 0 var(--space-sm) 0; font-size: clamp(1.6rem, 4vw, 2.2rem); letter-spacing: -0.02em;">Successfully Signed In!</h1>
+
+    <p style="margin: 0 0 var(--space-md) 0; font-size: 1rem; color: var(--secondary); line-height: 1.5;">
+      Logged in as <strong style="color: var(--primary);">${escapeHtml(email)}</strong>.<br>
+      Your MCP agents (Antigravity, Gemini, Codex, Cursor, Claude) are now connected.
+    </p>
+
+    <p class="text-muted" style="margin: 0; font-size: 0.875rem;">
+      You can safely close this browser window and return to your terminal.
+    </p>
   </div>
 </body>
 </html>`);
@@ -119,8 +150,50 @@ async function handleLoginCommand() {
           server.close(() => process.exit(0));
         }, 1000);
       } else {
-        res.writeHead(400, { 'Content-Type': 'text/plain' });
-        res.end('Authentication failed: Missing token');
+        res.writeHead(400, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Previews - Authentication Failed</title>
+
+  <!-- Brand Identity CSS -->
+  <link href="https://distribute.kartikarora.me/css/kartikarora.css" rel="stylesheet">
+
+  <!-- Required Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+
+  <!-- Brand Interaction JS -->
+  <script src="https://distribute.kartikarora.me/js/kartikarora.js"></script>
+</head>
+<body style="min-height: 100vh; display: flex; align-items: center; justify-content: center; margin: 0; padding: var(--space-md); box-sizing: border-box;">
+  <div class="card-glass" style="max-width: 480px; width: 100%; border-radius: var(--border-radius); padding: var(--space-2xl) var(--space-xl); text-align: center; box-shadow: 0 12px 40px var(--shadow);">
+    <div style="margin-bottom: var(--space-md);">
+      <span class="badge badge-loss" style="display: inline-flex; align-items: center; gap: var(--space-xs); padding: 4px 12px; font-size: 0.85rem;">
+        <span class="material-symbols-outlined" style="font-size: 1rem;">error</span>
+        Authentication Failed
+      </span>
+    </div>
+
+    <div style="margin-bottom: var(--space-md);">
+      <span class="material-symbols-outlined" style="font-size: var(--icon-size-feature); color: var(--secondary);">cancel</span>
+    </div>
+
+    <h1 style="margin: 0 0 var(--space-sm) 0; font-size: clamp(1.6rem, 4vw, 2.2rem); letter-spacing: -0.02em;">Authentication Failed</h1>
+
+    <p style="margin: 0 0 var(--space-md) 0; font-size: 1rem; color: var(--secondary); line-height: 1.5;">
+      Missing or invalid authentication token.
+    </p>
+
+    <p class="text-muted" style="margin: 0; font-size: 0.875rem;">
+      Please return to your terminal and run <code>npx preview-mcp login</code> to retry.
+    </p>
+  </div>
+</body>
+</html>`);
         server.close(() => process.exit(1));
       }
     } else {
