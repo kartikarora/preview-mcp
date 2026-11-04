@@ -1,6 +1,6 @@
 {
   "name": "preview",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "description": "Instantly deploy, version, diff, and share live HTML previews with optional password protection on isolated subdomains.",
   "author": {
     "name": "Kartik Arora",
