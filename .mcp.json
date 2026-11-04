@@ -1,9 +1,11 @@
 {
-  "preview": {
-    "command": "node",
-    "args": ["${CLAUDE_PLUGIN_ROOT:-.}/index.js"],
-    "env": {
-      "PREVIEWS_BASE_URL": "https://previews.kartikarora.me"
+  "mcpServers": {
+    "preview": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/index.js"],
+      "env": {
+        "PREVIEWS_BASE_URL": "https://previews.kartikarora.me"
+      }
     }
   }
 }

@@ -8,6 +8,14 @@
   },
   "homepage": "https://previews.kartikarora.me",
   "repository": "https://github.com/kartikarora/preview-mcp",
-  "mcpServers": "./.mcp.json",
+  "mcpServers": {
+    "preview": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/index.js"],
+      "env": {
+        "PREVIEWS_BASE_URL": "https://previews.kartikarora.me"
+      }
+    }
+  },
   "skills": "./skills"
 }

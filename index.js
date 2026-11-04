@@ -429,27 +429,148 @@ Options:
   process.exit(0);
 }
 
-// 4. Stdio MCP Transport Bridge for Claude
+// 4. Stdio MCP Transport Bridge for Claude Desktop
+const BRIDGE_TOOLS = [
+  {
+    name: 'authenticate',
+    description: 'Check authentication status or sign in with your Google account for Previews.',
+    inputSchema: { type: 'object', properties: {} },
+  },
+  {
+    name: 'create_preview',
+    description:
+      'Deploy an HTML/CSS/JS project to a live preview URL on an isolated subdomain. Automatically deploy live interactive prototypes and return live URLs for fast feedback.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        slug: { type: 'string', description: 'Desired subdomain slug (e.g., "my-landing-page")' },
+        files: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              path: { type: 'string', description: 'Relative file path (e.g., "index.html")' },
+              content: { type: 'string', description: 'File content as string (UTF-8) or base64' },
+              encoding: { type: 'string', enum: ['utf-8', 'base64'] },
+            },
+            required: ['path', 'content'],
+          },
+          description: 'Array of files. Must contain at least an index.html file.',
+        },
+        password: { type: 'string', description: 'Optional password to protect the preview.' },
+      },
+      required: ['files'],
+    },
+  },
+  {
+    name: 'update_preview',
+    description:
+      'Deploy a new version to an existing preview slug. Automatically iterates on the existing prototype while preserving version history.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        slug: { type: 'string', description: 'The existing preview slug to update' },
+        files: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              path: { type: 'string', description: 'Relative file path' },
+              content: { type: 'string', description: 'File content' },
+              encoding: { type: 'string', enum: ['utf-8', 'base64'] },
+            },
+            required: ['path', 'content'],
+          },
+          description: 'Array of files to add or replace.',
+        },
+        changelog: { type: 'string', description: 'Brief description of changes' },
+      },
+      required: ['slug', 'files'],
+    },
+  },
+  {
+    name: 'list_previews',
+    description: 'List active HTML preview projects owned by the authenticated user.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        limit: { type: 'number', description: 'Maximum previews to list (default 20)' },
+        offset: { type: 'number', description: 'Pagination offset' },
+      },
+    },
+  },
+  {
+    name: 'get_preview_diff',
+    description: 'View file-by-file text diff between two versions of a preview.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        slug: { type: 'string', description: 'Subdomain slug of the project' },
+        from_version: { type: 'number', description: 'Starting version' },
+        to_version: { type: 'number', description: 'Ending version' },
+      },
+      required: ['slug'],
+    },
+  },
+  {
+    name: 'set_preview_password',
+    description: 'Set, update, or remove password protection for an existing preview project.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        slug: { type: 'string', description: 'The preview slug' },
+        password: { type: 'string', description: 'Password to set, or empty to make public' },
+      },
+      required: ['slug'],
+    },
+  },
+  {
+    name: 'delete_preview',
+    description: 'Permanently delete a preview project and all its versions and assets.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        slug: { type: 'string', description: 'The preview slug to delete' },
+      },
+      required: ['slug'],
+    },
+  },
+];
+
+const BRIDGE_PROMPTS = [
+  {
+    name: 'figma_prototype',
+    description:
+      'Convert a Figma design, screenshot, or wireframe into a live, interactive deployed preview URL with zero manual file setup.',
+    arguments: [
+      {
+        name: 'design_description',
+        description: 'Description, layout breakdown, or paste of design tokens/text from Figma',
+        required: true,
+      },
+      { name: 'slug', description: 'Optional desired preview subdomain slug', required: false },
+    ],
+  },
+  {
+    name: 'voice_iterate',
+    description:
+      'Apply rapid voice-dictated edits to an existing live preview and deploy a new version with diff visibility.',
+    arguments: [
+      { name: 'slug', description: 'Existing preview subdomain slug to iterate on', required: true },
+      { name: 'voice_feedback', description: 'Dictated feedback or design tweaks to apply', required: true },
+    ],
+  },
+];
+
 function startStdioMcpBridge() {
-  const config = resolveConfig();
+  let config = resolveConfig();
 
   function sendResponse(responseObj) {
     process.stdout.write(JSON.stringify(responseObj) + '\n');
   }
 
-  async function forwardRpcRequest(rpcMessage) {
-    if (!config.token) {
-      return {
-        jsonrpc: '2.0',
-        id: rpcMessage.id ?? null,
-        error: {
-          code: -32001,
-          message:
-            'Not authenticated. Please run "npx preview-mcp login" or "npx preview-mcp reauthenticate" to sign in with your Google account, or set PREVIEWS_API_TOKEN in your environment.',
-        },
-      };
-    }
-
+  async function forwardToRemote(rpcMessage) {
+    config = resolveConfig();
     const endpoint = `${config.baseUrl}/mcp`;
 
     try {
@@ -457,7 +578,7 @@ function startStdioMcpBridge() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${config.token}`
+          Authorization: `Bearer ${config.token}`,
         },
         body: JSON.stringify(rpcMessage),
       });
@@ -491,6 +612,203 @@ function startStdioMcpBridge() {
     }
   }
 
+  async function handleRpcMessage(rpcMessage) {
+    const { id, method, params } = rpcMessage || {};
+
+    // Standard MCP ping
+    if (method === 'ping') {
+      return { jsonrpc: '2.0', id, result: {} };
+    }
+
+    // MCP initialize handshake - ALWAYS SUCCEED
+    if (method === 'initialize') {
+      return {
+        jsonrpc: '2.0',
+        id,
+        result: {
+          protocolVersion: '2024-11-05',
+          capabilities: {
+            tools: { listChanged: false },
+            prompts: { listChanged: false },
+          },
+          serverInfo: {
+            name: 'preview-mcp-bridge',
+            version: '0.4.0',
+          },
+        },
+      };
+    }
+
+    // Initialized notification
+    if (method === 'notifications/initialized' || method === 'initialized') {
+      return id !== undefined && id !== null ? { jsonrpc: '2.0', id, result: {} } : null;
+    }
+
+    // Prompts list
+    if (method === 'prompts/list') {
+      return {
+        jsonrpc: '2.0',
+        id,
+        result: { prompts: BRIDGE_PROMPTS },
+      };
+    }
+
+    // Prompts get
+    if (method === 'prompts/get') {
+      const promptName = params?.name;
+      const args = params?.arguments || {};
+      if (promptName === 'figma_prototype') {
+        return {
+          jsonrpc: '2.0',
+          id,
+          result: {
+            description: 'Figma to Live Preview workflow',
+            messages: [
+              {
+                role: 'user',
+                content: {
+                  type: 'text',
+                  text: `Create a clean, interactive single-page or multi-page HTML preview based on this Figma design:\n\n${args.design_description || ''}\n\nCall the create_preview tool to deploy immediately and give me the live link.`,
+                },
+              },
+            ],
+          },
+        };
+      }
+      if (promptName === 'voice_iterate') {
+        return {
+          jsonrpc: '2.0',
+          id,
+          result: {
+            description: 'Voice dictation iteration workflow',
+            messages: [
+              {
+                role: 'user',
+                content: {
+                  type: 'text',
+                  text: `Apply this voice feedback to the live preview "${args.slug || ''}":\n\n${args.voice_feedback || ''}\n\nCall the update_preview tool on slug "${args.slug || ''}" and share the updated preview URL and diff.`,
+                },
+              },
+            ],
+          },
+        };
+      }
+    }
+
+    // Tools list - ALWAYS SUCCEED even when unauthenticated
+    if (method === 'tools/list') {
+      config = resolveConfig();
+      if (config.token) {
+        try {
+          const remoteResp = await forwardToRemote(rpcMessage);
+          if (remoteResp && remoteResp.result && Array.isArray(remoteResp.result.tools)) {
+            return remoteResp;
+          }
+        } catch (_) {}
+      }
+      return {
+        jsonrpc: '2.0',
+        id,
+        result: { tools: BRIDGE_TOOLS },
+      };
+    }
+
+    // Tools call
+    if (method === 'tools/call') {
+      const toolName = params?.name;
+      config = resolveConfig();
+
+      if (toolName === 'authenticate') {
+        let userEmail = '';
+        try {
+          if (fs.existsSync(CONFIG_FILE)) {
+            const saved = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
+            userEmail = saved.email || '';
+          }
+        } catch (_) {}
+
+        if (config.token) {
+          return {
+            jsonrpc: '2.0',
+            id,
+            result: {
+              content: [
+                {
+                  type: 'text',
+                  text: `### Previews Authentication\n\n✅ You are authenticated with Google${userEmail ? ` as **${userEmail}**` : ''}.\n\nCredentials stored in \`~/.preview/config.json\`.\nYou can start creating previews immediately with the \`create_preview\` tool!`,
+                },
+              ],
+            },
+          };
+        }
+
+        // Not authenticated yet - prompt interactive login or return web login instructions
+        try {
+          const authResult = await promptLogin(config.baseUrl);
+          config = resolveConfig();
+          return {
+            jsonrpc: '2.0',
+            id,
+            result: {
+              content: [
+                {
+                  type: 'text',
+                  text: `### Previews Authentication\n\n🎉 Successfully signed in as **${authResult.email}**!\n\nYour session token is saved. You can now use \`create_preview\`, \`update_preview\`, and all other Previews tools directly in Claude Desktop!`,
+                },
+              ],
+            },
+          };
+        } catch (err) {
+          return {
+            jsonrpc: '2.0',
+            id,
+            result: {
+              content: [
+                {
+                  type: 'text',
+                  text: `### Previews Authentication Required\n\nPlease visit [${config.baseUrl}/auth/login](${config.baseUrl}/auth/login) in your browser to sign in with Google.\n\nThen run \`npx preview-mcp login\` or paste your session token into \`~/.preview/config.json\`.`,
+                },
+              ],
+              isError: true,
+            },
+          };
+        }
+      }
+
+      // Other tools require authentication
+      if (!config.token) {
+        return {
+          jsonrpc: '2.0',
+          id,
+          result: {
+            content: [
+              {
+                type: 'text',
+                text: `⚠️ **Authentication Required**\n\nYou are not signed in to Previews yet.\n\nPlease call the **\`authenticate\`** tool, or visit **[${config.baseUrl}/auth/login](${config.baseUrl}/auth/login)** to log in with your Google account.`,
+              },
+            ],
+            isError: true,
+          },
+        };
+      }
+
+      // Authenticated - forward tool call to remote Previews Worker
+      return await forwardToRemote(rpcMessage);
+    }
+
+    // Default: try forwarding to remote if token exists
+    config = resolveConfig();
+    if (config.token) {
+      return await forwardToRemote(rpcMessage);
+    }
+
+    return {
+      jsonrpc: '2.0',
+      id,
+      error: { code: -32601, message: `Method not found: ${method}` },
+    };
+  }
+
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -513,8 +831,8 @@ function startStdioMcpBridge() {
       return;
     }
 
-    const response = await forwardRpcRequest(rpcMessage);
-    if (response !== null) {
+    const response = await handleRpcMessage(rpcMessage);
+    if (response !== null && response !== undefined) {
       sendResponse(response);
     }
   });
