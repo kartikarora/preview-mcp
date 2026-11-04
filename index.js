@@ -76,28 +76,22 @@ function saveCredentials(token, email, baseUrl) {
 }
 
 // 2. Interactive Google OAuth Login / Re-authentication Flow
-async function handleLoginCommand() {
-  // Login target defaults to production unless explicitly set via environment variable
-  const targetBaseUrl = (
-    process.env.PREVIEWS_BASE_URL ||
-    process.env.PREVIEW_BASE_URL ||
-    'https://previews.kartikarora.me'
-  ).replace(/\/+$/, '');
+function promptLogin(targetBaseUrl) {
+  return new Promise((resolve, reject) => {
+    console.log('Initiating Google sign-in for Previews (' + targetBaseUrl + ')...');
 
-  console.log('Initiating Google sign-in for Previews (' + targetBaseUrl + ')...');
+    const server = http.createServer((req, res) => {
+      const reqUrl = new URL(req.url, `http://${req.headers.host}`);
 
-  const server = http.createServer((req, res) => {
-    const reqUrl = new URL(req.url, `http://${req.headers.host}`);
+      if (reqUrl.pathname === '/callback') {
+        const token = reqUrl.searchParams.get('token');
+        const email = reqUrl.searchParams.get('email') || 'Google Account';
 
-    if (reqUrl.pathname === '/callback') {
-      const token = reqUrl.searchParams.get('token');
-      const email = reqUrl.searchParams.get('email') || 'Google Account';
+        if (token) {
+          saveCredentials(token, email, targetBaseUrl);
 
-      if (token) {
-        saveCredentials(token, email, targetBaseUrl);
-
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        res.end(`<!DOCTYPE html>
+          res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+          res.end(`<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -142,16 +136,15 @@ async function handleLoginCommand() {
 </body>
 </html>`);
 
-        console.log(`\n✓ Successfully authenticated with Google as ${email}`);
-        console.log(`✓ Credentials stored in ${CONFIG_FILE}`);
-        console.log('\nYou can now use Previews in Antigravity, Gemini, Codex, Cursor, Claude, or any MCP client.');
+          console.log(`\n✓ Successfully authenticated with Google as ${email}`);
+          console.log(`✓ Credentials stored in ${CONFIG_FILE}`);
 
-        setTimeout(() => {
-          server.close(() => process.exit(0));
-        }, 1000);
-      } else {
-        res.writeHead(400, { 'Content-Type': 'text/html; charset=utf-8' });
-        res.end(`<!DOCTYPE html>
+          setTimeout(() => {
+            server.close(() => resolve({ token, email }));
+          }, 1000);
+        } else {
+          res.writeHead(400, { 'Content-Type': 'text/html; charset=utf-8' });
+          res.end(`<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -194,30 +187,249 @@ async function handleLoginCommand() {
   </div>
 </body>
 </html>`);
-        server.close(() => process.exit(1));
+          server.close(() => reject(new Error('Missing or invalid authentication token')));
+        }
+      } else {
+        res.writeHead(404);
+        res.end('Not Found');
       }
-    } else {
-      res.writeHead(404);
-      res.end('Not Found');
-    }
-  });
+    });
 
-  server.listen(0, '127.0.0.1', () => {
-    const address = server.address();
-    const port = address.port;
-    const loginUrl = `${targetBaseUrl}/auth/login?cli_port=${port}`;
+    server.listen(0, '127.0.0.1', () => {
+      const address = server.address();
+      const port = address.port;
+      const loginUrl = `${targetBaseUrl}/auth/login?cli_port=${port}`;
 
-    console.log(`Opening browser to sign in with Google:\n${loginUrl}\n`);
-    openBrowser(loginUrl);
-  });
+      console.log(`Opening browser to sign in with Google:\n${loginUrl}\n`);
+      openBrowser(loginUrl);
+    });
 
-  server.on('error', (err) => {
-    console.error('Local server error:', err.message);
-    process.exit(1);
+    server.on('error', (err) => {
+      console.error('Local server error:', err.message);
+      reject(err);
+    });
   });
 }
 
-// 3. Stdio MCP Transport Bridge for Claude
+async function handleLoginCommand() {
+  const targetBaseUrl = (
+    process.env.PREVIEWS_BASE_URL ||
+    process.env.PREVIEW_BASE_URL ||
+    'https://previews.kartikarora.me'
+  ).replace(/\/+$/, '');
+
+  try {
+    await promptLogin(targetBaseUrl);
+    process.exit(0);
+  } catch (err) {
+    console.error('Login failed:', err.message);
+    process.exit(1);
+  }
+}
+
+// 3. Zero-Friction Desktop App Auto-Configuration
+function getKnownAppConfigs() {
+  const home = os.homedir();
+  const platform = process.platform;
+  const isMac = platform === 'darwin';
+  const isWin = platform === 'win32';
+
+  const configs = [];
+
+  // 1. Claude Desktop
+  let claudeDir;
+  if (isMac) {
+    claudeDir = path.join(home, 'Library', 'Application Support', 'Claude');
+  } else if (isWin) {
+    claudeDir = path.join(process.env.APPDATA || path.join(home, 'AppData', 'Roaming'), 'Claude');
+  } else {
+    claudeDir = path.join(home, '.config', 'Claude');
+  }
+  const claudePath = path.join(claudeDir, 'claude_desktop_config.json');
+
+  configs.push({
+    id: 'claude',
+    name: 'Claude Desktop',
+    dir: claudeDir,
+    path: claudePath,
+    isInstalled: fs.existsSync(claudeDir),
+    defaultEnable: true,
+  });
+
+  // 2. Cursor (Global User Settings)
+  let cursorDir;
+  if (isMac) {
+    cursorDir = path.join(home, 'Library', 'Application Support', 'Cursor', 'User', 'globalStorage', 'cursor.mcp');
+  } else if (isWin) {
+    cursorDir = path.join(process.env.APPDATA || path.join(home, 'AppData', 'Roaming'), 'Cursor', 'User', 'globalStorage', 'cursor.mcp');
+  } else {
+    cursorDir = path.join(home, '.config', 'Cursor', 'User', 'globalStorage', 'cursor.mcp');
+  }
+  const cursorGlobalPath = path.join(cursorDir, 'mcp.json');
+
+  configs.push({
+    id: 'cursor',
+    name: 'Cursor (Global)',
+    dir: cursorDir,
+    path: cursorGlobalPath,
+    isInstalled: fs.existsSync(cursorDir),
+    defaultEnable: false,
+  });
+
+  // 3. Windsurf
+  const windsurfDir = path.join(home, '.codeium', 'windsurf');
+  const windsurfPath = path.join(windsurfDir, 'mcp_config.json');
+
+  configs.push({
+    id: 'windsurf',
+    name: 'Windsurf',
+    dir: windsurfDir,
+    path: windsurfPath,
+    isInstalled: fs.existsSync(windsurfDir),
+    defaultEnable: false,
+  });
+
+  return configs;
+}
+
+function updateMcpConfigFile(filePath, targetBaseUrl) {
+  let json = {};
+  const dir = path.dirname(filePath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+
+  if (fs.existsSync(filePath)) {
+    try {
+      json = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    } catch {
+      const backupPath = `${filePath}.bak-${Date.now()}`;
+      fs.copyFileSync(filePath, backupPath);
+      console.warn(`⚠️ Warning: Existing config at ${filePath} was invalid JSON. Backed up to ${backupPath}`);
+      json = {};
+    }
+  }
+
+  if (!json.mcpServers || typeof json.mcpServers !== 'object') {
+    json.mcpServers = {};
+  }
+
+  json.mcpServers.preview = {
+    command: 'npx',
+    args: ['-y', 'preview-mcp'],
+    env: {
+      PREVIEWS_BASE_URL: targetBaseUrl,
+    },
+  };
+
+  fs.writeFileSync(filePath, JSON.stringify(json, null, 2) + '\n', 'utf8');
+}
+
+async function handleSetupCommand() {
+  const targetBaseUrl = (
+    process.env.PREVIEWS_BASE_URL ||
+    process.env.PREVIEW_BASE_URL ||
+    'https://previews.kartikarora.me'
+  ).replace(/\/+$/, '');
+
+  if (process.argv.includes('--help') || process.argv.includes('-h')) {
+    console.log(`
+Previews MCP Desktop Setup
+
+Usage:
+  npx preview-mcp setup [app] [options]
+
+Supported Apps:
+  claude      Configure Claude Desktop (default)
+  cursor      Configure Cursor (Global MCP)
+  windsurf    Configure Windsurf
+  all         Configure all detected desktop apps
+
+Options:
+  --login     Force browser Google sign-in even if already authenticated
+  --help, -h  Show this help message
+`);
+    process.exit(0);
+  }
+
+  console.log('\n======================================================');
+  console.log('  🚀 Previews MCP Zero-Friction Desktop Setup');
+  console.log('======================================================\n');
+
+  const apps = getKnownAppConfigs();
+  const args = process.argv.slice(2).filter((a) => !a.startsWith('-'));
+  const requestedApp = args.find((a) => ['claude', 'cursor', 'windsurf', 'all'].includes(a.toLowerCase()));
+
+  let configuredCount = 0;
+
+  for (const app of apps) {
+    const shouldConfigure =
+      requestedApp === 'all' ||
+      (requestedApp && requestedApp.toLowerCase() === app.id) ||
+      (!requestedApp && (app.isInstalled || app.defaultEnable));
+
+    if (shouldConfigure) {
+      try {
+        updateMcpConfigFile(app.path, targetBaseUrl);
+        console.log(`✓ Configured ${app.name}`);
+        console.log(`  Path: ${app.path}\n`);
+        configuredCount++;
+      } catch (err) {
+        console.error(`✗ Failed to configure ${app.name} (${app.path}):`, err.message);
+      }
+    }
+  }
+
+  if (configuredCount === 0) {
+    const claudeApp = apps.find((a) => a.id === 'claude');
+    if (claudeApp) {
+      updateMcpConfigFile(claudeApp.path, targetBaseUrl);
+      console.log(`✓ Configured ${claudeApp.name}`);
+      console.log(`  Path: ${claudeApp.path}\n`);
+      configuredCount++;
+    }
+  }
+
+  // Check authentication
+  const existingConfig = resolveConfig();
+  let userEmail = '';
+  try {
+    if (fs.existsSync(CONFIG_FILE)) {
+      const saved = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
+      userEmail = saved.email || '';
+    }
+  } catch (_) {}
+
+  const forceLogin = process.argv.includes('--login') || process.argv.includes('--auth');
+
+  if (existingConfig.token && !forceLogin) {
+    console.log(`✓ Authenticated with Google${userEmail ? ` as ${userEmail}` : ''}`);
+    console.log(`  Credentials found in ~/.preview/config.json\n`);
+  } else {
+    console.log('Authenticating with your Google Account for Previews...');
+    try {
+      const loginResult = await promptLogin(targetBaseUrl);
+      userEmail = loginResult.email;
+    } catch (err) {
+      console.error('\nAuthentication failed:', err.message);
+      console.log('You can sign in later by running: npx preview-mcp login\n');
+    }
+  }
+
+  console.log('======================================================');
+  console.log('  🎉 Previews is ready for frictionless prototyping!');
+  console.log('======================================================');
+  console.log('\nNext steps:');
+  console.log('1. Restart your desktop app (e.g. Cmd+Q Claude Desktop).');
+  console.log('2. In your desktop app chat:');
+  console.log('   "Create an interactive prototype of a SaaS landing page"');
+  console.log('   or use voice dictation alongside your Figma designs.');
+  console.log('3. Previews will automatically deploy and return your live preview link!\n');
+
+  process.exit(0);
+}
+
+// 4. Stdio MCP Transport Bridge for Claude
 function startStdioMcpBridge() {
   const config = resolveConfig();
 
@@ -312,13 +524,38 @@ function startStdioMcpBridge() {
 }
 
 // Main execution switch
+const isVersionCommand =
+  process.argv.includes('--version') ||
+  process.argv.includes('-v') ||
+  process.argv.includes('version');
+
+if (isVersionCommand) {
+  try {
+    const pkg = JSON.parse(
+      fs.readFileSync(new URL('./package.json', import.meta.url), 'utf8')
+    );
+    console.log(`preview-mcp v${pkg.version}`);
+  } catch {
+    console.log('preview-mcp (version unknown)');
+  }
+  process.exit(0);
+}
+
+const isSetupCommand =
+  process.argv.includes('setup') ||
+  process.argv.includes('install') ||
+  process.argv.includes('configure') ||
+  process.argv.includes('init');
+
 const isAuthCommand =
   process.argv.includes('login') ||
   process.argv.includes('authenticate') ||
   process.argv.includes('reauthenticate') ||
   process.argv.includes('auth');
 
-if (isAuthCommand) {
+if (isSetupCommand) {
+  handleSetupCommand();
+} else if (isAuthCommand) {
   handleLoginCommand();
 } else {
   startStdioMcpBridge();

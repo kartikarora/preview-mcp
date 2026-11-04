@@ -9,13 +9,26 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
+    "setup": "node index.js setup",
     "login": "node index.js login",
     "authenticate": "node index.js authenticate",
     "reauthenticate": "node index.js reauthenticate"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kartikarora/preview-mcp.git"
+  },
+  "homepage": "https://previews.kartikarora.me",
+  "bugs": {
+    "url": "https://github.com/kartikarora/preview-mcp/issues"
+  },
   "files": [
     "index.js",
-    "README.md"
+    "README.md",
+    "LICENSE",
+    ".claude-plugin",
+    ".mcp.json",
+    "skills"
   ],
   "keywords": [
     "mcp",

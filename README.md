@@ -8,9 +8,28 @@ Authentication is powered entirely by your **Google Account**, reusing the exist
 
 ---
 
-## 1. Quick Authentication & Re-authentication (Google Login)
+## 1. Zero-Friction Desktop Setup (Claude Desktop, Cursor, Windsurf)
 
-Run this command from any terminal to sign in or re-authenticate:
+To configure your desktop AI apps and authenticate with Google in one single step, run:
+
+```bash
+npx preview-mcp setup
+```
+
+This auto-detects installed desktop apps (such as Claude Desktop and Cursor), writes or updates their MCP configurations safely, and launches the browser to sign in with your Google Account.
+
+To target a specific app:
+```bash
+npx preview-mcp setup claude    # Configure Claude Desktop
+npx preview-mcp setup cursor    # Configure Cursor
+npx preview-mcp setup all       # Configure all detected clients
+```
+
+---
+
+## 2. Quick Authentication & Re-authentication (Google Login)
+
+Run this command anytime to sign in or re-authenticate:
 ```bash
 npx preview-mcp login
 ```
@@ -22,7 +41,7 @@ Alternatively, if you're already logged into the Previews web dashboard, click *
 
 ---
 
-## 2. Agent & IDE Configurations
+## 3. Manual Agent & IDE Configurations
 
 All tools support the standard MCP JSON configuration format.
 
@@ -102,6 +121,9 @@ Add to your client configuration:
 ```
 
 ### Claude Desktop (`claude_desktop_config.json`)
+Run `npx preview-mcp setup` to automatically configure Claude Desktop.
+
+Or configure manually in:
 - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 ```json
@@ -117,6 +139,13 @@ Add to your client configuration:
   }
 }
 ```
+
+### Claude Plugin (Claude Code & Claude Desktop)
+Install Previews as a native Claude plugin directly from GitHub:
+```bash
+claude plugin add kartikarora/preview-mcp
+```
+*(Or clone `https://github.com/kartikarora/preview-mcp` into your Claude plugins directory)*
 
 ### Claude Code (`.mcp.json` or CLI)
 Claude Code supports both standard HTTP transport with native **Authenticate / Re-authenticate** prompts, and local stdio:
@@ -168,10 +197,22 @@ For automated cloud agents (Antigravity, Gemini, OpenAI Codex, LangChain, LlamaI
 | Tool | Description |
 | :--- | :--- |
 | `authenticate` | Check status or get instructions to authenticate/re-authenticate with Google. |
-| `create_preview` | Deploy v1 preview. Accepts `html` or multi-file `files` array. Password optional. |
-| `update_preview` | Deploy new version (v2, v3, etc.) with optional changelog. |
+| `create_preview` | Deploy v1 preview. Autonomously deployed when building web UI; returns live URL. |
+| `update_preview` | Deploy new version (v2, v3, etc.) on the same URL for rapid voice iteration. |
 | `get_preview_diff` | Get plain-text unified diff between any two versions (e.g. `1..2`). |
 | `list_previews` | List active preview projects owned by the authenticated Google user. |
 | `get_preview` | Inspect project details, status, files, and versions. |
 | `set_preview_password` | Set, update, or remove password protection. |
 | `delete_preview` | Delete preview project and clean up R2 storage. |
+
+---
+
+## 5. Prototyping & Voice Workflow Prompts
+
+Previews exposes MCP Prompts for zero-friction prototyping:
+
+| Prompt | Description |
+| :--- | :--- |
+| `figma_prototype` | Transforms Figma designs, screenshots, or layout specs into high-fidelity live web prototypes with Google Fonts, Lucide icons, and Unsplash images. |
+| `voice_iterate` | Applies conversational voice feedback ("yapping into the mic") to an existing preview project without changing its URL. |
+

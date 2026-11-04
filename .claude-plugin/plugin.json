@@ -1,0 +1,13 @@
+{
+  "name": "preview",
+  "version": "0.3.2",
+  "description": "Instantly deploy, version, diff, and share live HTML previews with optional password protection on isolated subdomains.",
+  "author": {
+    "name": "Kartik Arora",
+    "url": "https://kartikarora.me"
+  },
+  "homepage": "https://previews.kartikarora.me",
+  "repository": "https://github.com/kartikarora/preview-mcp",
+  "mcpServers": "./.mcp.json",
+  "skills": "./skills"
+}
