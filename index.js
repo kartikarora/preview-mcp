@@ -96,43 +96,46 @@ function promptLogin(targetBaseUrl) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
   <title>Previews - Authenticated</title>
 
-  <!-- Brand Identity CSS -->
-  <link href="https://distribute.kartikarora.me/css/kartikarora.css" rel="stylesheet">
+  <!-- Brand Identity CSS (v2.0.0) -->
+  <link href="https://distribute.kartikarora.me/css/kartikarora.2.0.0.css" rel="stylesheet">
 
-  <!-- Required Fonts & Icons -->
+  <!-- Required Fonts & Icons: Chivo (Display & Body) + JetBrains Mono (Code) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Chivo:ital,wght@0,300;0,400;0,500;0,600;0,700;0,900;1,400&family=JetBrains+Mono:wght@400;500;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
 
-  <!-- Brand Interaction JS -->
-  <script src="https://distribute.kartikarora.me/js/kartikarora.js"></script>
+  <!-- Brand Interaction & A11y JS (v2.0.0) -->
+  <script src="https://distribute.kartikarora.me/js/kartikarora.2.0.0.js" defer></script>
 </head>
-<body style="min-height: 100vh; display: flex; align-items: center; justify-content: center; margin: 0; padding: var(--space-md); box-sizing: border-box;">
-  <div class="card-glass" style="max-width: 480px; width: 100%; border-radius: var(--border-radius); padding: var(--space-2xl) var(--space-xl); text-align: center; box-shadow: 0 12px 40px var(--shadow);">
-    <div style="margin-bottom: var(--space-md);">
-      <span class="badge badge-win" style="display: inline-flex; align-items: center; gap: var(--space-xs); padding: 4px 12px; font-size: 0.85rem;">
-        <span class="material-symbols-outlined" style="font-size: 1rem;">verified_user</span>
-        Google Authentication
-      </span>
+<body class="studio-body">
+  <main style="min-height: 100svh; display: flex; align-items: center; justify-content: center; padding: var(--space-md);">
+    <div class="tokyo-card" style="max-width: 480px; width: 100%; text-align: center; align-items: center;">
+      <div style="margin-bottom: var(--space-md);">
+        <span class="badge-pop">
+          <span class="material-symbols-outlined" aria-hidden="true">verified_user</span>
+          Google Authentication
+        </span>
+      </div>
+
+      <div style="margin-bottom: var(--space-md);">
+        <span class="material-symbols-outlined" aria-hidden="true" style="font-size: var(--icon-size-feature); color: var(--color-signal);">check_circle</span>
+      </div>
+
+      <h1 style="margin: 0 0 var(--space-sm) 0; font-size: clamp(1.6rem, 4vw, 2.2rem);">Successfully Signed In!</h1>
+
+      <p style="margin: 0 0 var(--space-md) 0; font-size: var(--text-body); color: var(--color-ink-muted); line-height: 1.5;">
+        Logged in as <strong style="color: var(--color-ink);">${escapeHtml(email)}</strong>.<br>
+        Your MCP agents (Antigravity, Gemini, Codex, Cursor, Claude) are now connected.
+      </p>
+
+      <p class="text-muted" style="margin: 0; font-size: var(--text-sm);">
+        You can safely close this browser window and return to your terminal.
+      </p>
     </div>
-
-    <div style="margin-bottom: var(--space-md);">
-      <span class="material-symbols-outlined" style="font-size: var(--icon-size-feature); color: var(--accent);">check_circle</span>
-    </div>
-
-    <h1 style="margin: 0 0 var(--space-sm) 0; font-size: clamp(1.6rem, 4vw, 2.2rem); letter-spacing: -0.02em;">Successfully Signed In!</h1>
-
-    <p style="margin: 0 0 var(--space-md) 0; font-size: 1rem; color: var(--secondary); line-height: 1.5;">
-      Logged in as <strong style="color: var(--primary);">${escapeHtml(email)}</strong>.<br>
-      Your MCP agents (Antigravity, Gemini, Codex, Cursor, Claude) are now connected.
-    </p>
-
-    <p class="text-muted" style="margin: 0; font-size: 0.875rem;">
-      You can safely close this browser window and return to your terminal.
-    </p>
-  </div>
+  </main>
 </body>
 </html>`);
 
@@ -149,42 +152,45 @@ function promptLogin(targetBaseUrl) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
   <title>Previews - Authentication Failed</title>
 
-  <!-- Brand Identity CSS -->
-  <link href="https://distribute.kartikarora.me/css/kartikarora.css" rel="stylesheet">
+  <!-- Brand Identity CSS (v2.0.0) -->
+  <link href="https://distribute.kartikarora.me/css/kartikarora.2.0.0.css" rel="stylesheet">
 
-  <!-- Required Fonts & Icons -->
+  <!-- Required Fonts & Icons: Chivo (Display & Body) + JetBrains Mono (Code) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Chivo:ital,wght@0,300;0,400;0,500;0,600;0,700;0,900;1,400&family=JetBrains+Mono:wght@400;500;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
 
-  <!-- Brand Interaction JS -->
-  <script src="https://distribute.kartikarora.me/js/kartikarora.js"></script>
+  <!-- Brand Interaction & A11y JS (v2.0.0) -->
+  <script src="https://distribute.kartikarora.me/js/kartikarora.2.0.0.js" defer></script>
 </head>
-<body style="min-height: 100vh; display: flex; align-items: center; justify-content: center; margin: 0; padding: var(--space-md); box-sizing: border-box;">
-  <div class="card-glass" style="max-width: 480px; width: 100%; border-radius: var(--border-radius); padding: var(--space-2xl) var(--space-xl); text-align: center; box-shadow: 0 12px 40px var(--shadow);">
-    <div style="margin-bottom: var(--space-md);">
-      <span class="badge badge-loss" style="display: inline-flex; align-items: center; gap: var(--space-xs); padding: 4px 12px; font-size: 0.85rem;">
-        <span class="material-symbols-outlined" style="font-size: 1rem;">error</span>
-        Authentication Failed
-      </span>
+<body class="studio-body">
+  <main style="min-height: 100svh; display: flex; align-items: center; justify-content: center; padding: var(--space-md);">
+    <div class="tokyo-card" style="max-width: 480px; width: 100%; text-align: center; align-items: center;">
+      <div style="margin-bottom: var(--space-md);">
+        <span class="badge badge-loss" style="display: inline-flex; align-items: center; gap: var(--space-xs);">
+          <span class="material-symbols-outlined" aria-hidden="true">error</span>
+          Authentication Failed
+        </span>
+      </div>
+
+      <div style="margin-bottom: var(--space-md);">
+        <span class="material-symbols-outlined" aria-hidden="true" style="font-size: var(--icon-size-feature); color: var(--color-danger);">cancel</span>
+      </div>
+
+      <h1 style="margin: 0 0 var(--space-sm) 0; font-size: clamp(1.6rem, 4vw, 2.2rem);">Authentication Failed</h1>
+
+      <p style="margin: 0 0 var(--space-md) 0; font-size: var(--text-body); color: var(--color-ink-muted); line-height: 1.5;">
+        Missing or invalid authentication token.
+      </p>
+
+      <p class="text-muted" style="margin: 0; font-size: var(--text-sm);">
+        Please return to your terminal and run <code>npx preview-mcp login</code> to retry.
+      </p>
     </div>
-
-    <div style="margin-bottom: var(--space-md);">
-      <span class="material-symbols-outlined" style="font-size: var(--icon-size-feature); color: var(--secondary);">cancel</span>
-    </div>
-
-    <h1 style="margin: 0 0 var(--space-sm) 0; font-size: clamp(1.6rem, 4vw, 2.2rem); letter-spacing: -0.02em;">Authentication Failed</h1>
-
-    <p style="margin: 0 0 var(--space-md) 0; font-size: 1rem; color: var(--secondary); line-height: 1.5;">
-      Missing or invalid authentication token.
-    </p>
-
-    <p class="text-muted" style="margin: 0; font-size: 0.875rem;">
-      Please return to your terminal and run <code>npx preview-mcp login</code> to retry.
-    </p>
-  </div>
+  </main>
 </body>
 </html>`);
           server.close(() => reject(new Error('Missing or invalid authentication token')));
